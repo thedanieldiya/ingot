@@ -14,6 +14,7 @@ export interface WorldNode {
   type: NodeKind;
   description: string;
   lore?: string;
+  imageUrl?: string;
   parentId?: string | null;
   position: { x: number; y: number };
 }

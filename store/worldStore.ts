@@ -2,7 +2,10 @@
 
 import { create } from "zustand";
 import { sampleBeyonders } from "@/data/sampleBeyonders";
-import { NodeKind, World, WorldEdge, WorldNode } from "@/types/world";
+import { sampleGameOfThrones } from "@/data/sampleGameOfThrones";
+import type { NodeKind, World, WorldEdge, WorldNode } from "@/types/world";
+
+export type SampleWorldId = "beyonders" | "game-of-thrones";
 
 interface Store {
   worlds: World[];
@@ -14,17 +17,20 @@ interface Store {
   upsertEdge: (edge: WorldEdge) => void;
   removeEdge: (id: string) => void;
   addNodeAtCenter: (type: NodeKind, id?: string) => void;
-  loadSample: () => void;
+  loadSample: (sample?: SampleWorldId) => void;
 }
 
+const storageKey = "ingot-worlds";
+const legacyStorageKey = "nexus-worlds";
+
 const persist = (worlds: World[], activeWorldId?: string) => {
-  localStorage.setItem("nexus-worlds", JSON.stringify({ worlds, activeWorldId }));
+  localStorage.setItem(storageKey, JSON.stringify({ worlds, activeWorldId }));
 };
 
 const read = (): { worlds: World[]; activeWorldId?: string } => {
   if (typeof window === "undefined") return { worlds: [] };
   try {
-    const raw = localStorage.getItem("nexus-worlds");
+    const raw = localStorage.getItem(storageKey) ?? localStorage.getItem(legacyStorageKey);
     if (!raw) return { worlds: [] };
     return JSON.parse(raw);
   } catch {
@@ -90,9 +96,9 @@ export const useWorldStore = create<Store>((set, get) => ({
     };
     get().upsertNode(node);
   },
-  loadSample: () =>
+  loadSample: (sample = "game-of-thrones") =>
     set((s) => {
-      const world = sampleBeyonders();
+      const world = sample === "beyonders" ? sampleBeyonders() : sampleGameOfThrones();
       const worlds = [...s.worlds, world];
       persist(worlds, world.id);
       return { worlds, activeWorldId: world.id };
